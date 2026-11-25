@@ -1,0 +1,90 @@
+{
+  "PollingDefaults": {
+    "ScanIntervalSeconds": 30,
+    "StabilityChecksRequired": 2,
+    "MaxParallelRules": 4,
+    "PerRuleTimeoutSeconds": 45,
+    "LeaseDurationSeconds": 60
+  },
+  "Monitors": [
+    {
+      "RuleId": "checks-inbound-x9",
+      "Enabled": true,
+      "SourcePath": "\\\\YOUR_NAS_SERVER\\inbound\\checks",
+      "FilePattern": "*.x9",
+      "IncludeSubdirectories": false,
+      "ExistingFilesPolicy": "BaselineAndVerify",
+      "SlaMinutes": 15,
+      "VerificationMode": "FolderToFolder",
+      "FolderCheck": {
+        "TargetPath": "\\\\YOUR_NAS_SERVER\\archive\\checks\\{yyyy}\\{MM}\\{dd}",
+        "ErrorPath": "\\\\YOUR_NAS_SERVER\\error\\checks",
+        "SourceDisposition": "Moved",
+        "TrackFastPathMoves": true,
+        "TargetFileNameRegex": "^(?:[a-zA-Z0-9]+[_\\.])?{BaseName}{Ext}$",
+        "SourceExtractRegex": null,
+        "IgnoreCase": true,
+        "MinTargetModifiedOffsetSeconds": -120,
+        "VerifySizeMatch": false
+      }
+    },
+    {
+      "RuleId": "correspondence-stays-in-place",
+      "Enabled": true,
+      "SourcePath": "\\\\YOUR_NAS_SERVER\\inbound\\correspondence",
+      "FilePattern": "*.pdf",
+      "IncludeSubdirectories": false,
+      "ExistingFilesPolicy": "BaselineOnly",
+      "SlaMinutes": 20,
+      "VerificationMode": "FolderToDb",
+      "DbCheck": {
+        "ConnectionStringName": "BusinessAppDb",
+        "QueryKey": "CorrespondenceStatusByFileName",
+        "KeySource": "FileName",
+        "BatchSize": 200,
+        "SuccessValues": [
+          "PROCESSED",
+          "COMPLETED"
+        ],
+        "FailureValues": [
+          "FAILED",
+          "REJECTED"
+        ]
+      }
+    },
+    {
+      "RuleId": "critical-wire-audit",
+      "Enabled": true,
+      "SourcePath": "\\\\YOUR_NAS_SERVER\\inbound\\wires",
+      "FilePattern": "*.xml",
+      "IncludeSubdirectories": false,
+      "ExistingFilesPolicy": "BaselineAndVerify",
+      "SlaMinutes": 10,
+      "VerificationMode": "Hybrid",
+      "FolderCheck": {
+        "TargetPath": "\\\\YOUR_NAS_SERVER\\archive\\wires",
+        "ErrorPath": null,
+        "SourceDisposition": "Copied",
+        "TrackFastPathMoves": false,
+        "TargetFileNameRegex": "^(?:[a-zA-Z0-9]+[_\\.])?{BaseName}{Ext}$",
+        "SourceExtractRegex": null,
+        "IgnoreCase": true,
+        "MinTargetModifiedOffsetSeconds": -120,
+        "VerifySizeMatch": false
+      },
+      "DbCheck": {
+        "ConnectionStringName": "BusinessAppDb",
+        "QueryKey": "WireStatusByFileName",
+        "KeySource": "FileName",
+        "BatchSize": 200,
+        "SuccessValues": [
+          "SUCCESS"
+        ],
+        "FailureValues": [
+          "ERROR",
+          "FAILED"
+        ]
+      }
+    }
+  ]
+}
